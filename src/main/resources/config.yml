@@ -1,0 +1,58 @@
+# =========================================================
+#  DefaultStats config
+# =========================================================
+
+database:
+  # SQLITE або MYSQL
+  type: SQLITE
+
+  sqlite:
+    # Файл лежить у папці плагіна: plugins/DefaultStats/<file>
+    file: stats.db
+
+  mysql:
+    host: localhost
+    port: 3306
+    database: minecraft
+    username: root
+    password: ""
+    useSSL: false
+
+  # Префікс для назв таблиць (корисно, якщо БД спільна з іншими плагінами)
+  table-prefix: "defstats_"
+
+sync:
+  # Як часто (у секундах) записувати статистику всіх ОНЛАЙН гравців у БД
+  interval-seconds: 300
+
+  # Чи записувати статистику гравця одразу при виході з сервера
+  save-on-quit: true
+
+# Список блоків/предметів, для яких збирається окрема статистика видобутку.
+# Повний перелік усіх матеріалів гри був би занадто важким для сервера,
+# тому тут вказуються тільки потрібні тобі.
+# Назви - як в enum org.bukkit.Material (великими літерами).
+track-materials:
+  - STONE
+  - COAL_ORE
+  - IRON_ORE
+  - GOLD_ORE
+  - DIAMOND_ORE
+  - EMERALD_ORE
+  - REDSTONE_ORE
+  - LAPIS_ORE
+  - OAK_LOG
+  - SPRUCE_LOG
+  - BIRCH_LOG
+  - JUNGLE_LOG
+  - ACACIA_LOG
+  - DARK_OAK_LOG
+
+# Список типів мобів, для яких рахується окрема кількість вбивств.
+# Назви - як в enum org.bukkit.entity.EntityType.
+track-entities:
+  - ZOMBIE
+  - SKELETON
+  - CREEPER
+  - SPIDER
+  - ENDERMAN
