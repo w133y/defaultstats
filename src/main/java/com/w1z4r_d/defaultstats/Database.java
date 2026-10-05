@@ -32,6 +32,7 @@ public class Database {
 
     public void connect() throws SQLException {
         this.type = plugin.getConfig().getString("database.type", "SQLITE").toUpperCase();
+        loadDriver();
         this.tablePrefix = plugin.getConfig().getString("database.table-prefix", "defstats_");
         this.tableName = tablePrefix + "player_stats";
 
@@ -44,7 +45,7 @@ public class Database {
             boolean useSSL = plugin.getConfig().getBoolean("database.mysql.useSSL", false);
 
             String url = "jdbc:mysql://" + host + ":" + port + "/" + db
-                    + "?useSSL=" + useSSL + "&autoReconnect=true&characterEncoding=utf8";
+                    + "?useSSL=" + useSSL + "&characterEncoding=utf8";
             connection = DriverManager.getConnection(url, user, pass);
         } else {
             plugin.getDataFolder().mkdirs();
@@ -54,12 +55,37 @@ public class Database {
         }
     }
 
+    /**
+     * Loads the bundled JDBC driver explicitly. With shadow relocation the class name
+     * is rewritten too, so the plugin always uses its own driver and does not depend
+     * on whatever driver (if any) the server jar happens to ship.
+     */
+    private void loadDriver() throws SQLException {
+        String driverClass = type.equals("MYSQL") ? "com.mysql.cj.jdbc.Driver" : "org.sqlite.JDBC";
+        try {
+            Class.forName(driverClass);
+        } catch (ClassNotFoundException e) {
+            throw new SQLException("JDBC driver not found: " + driverClass, e);
+        }
+    }
+
+    /**
+     * Remote MySQL servers close idle connections (wait_timeout), which happens
+     * easily between syncs. Check the connection before use and reconnect if needed.
+     */
+    private void ensureConnection() throws SQLException {
+        if (connection != null && connection.isValid(5)) return;
+        plugin.getLogger().info("Database connection lost, reconnecting...");
+        close();
+        connect();
+    }
+
     public void createTables() throws SQLException {
         String sql;
         if (type.equals("MYSQL")) {
             sql = "CREATE TABLE IF NOT EXISTS " + tableName + " (" +
                     "uuid VARCHAR(36) NOT NULL PRIMARY KEY, " +
-                    "player_name VARCHAR(16) NOT NULL, " +
+                    "player_name VARCHAR(32) NOT NULL, " +
                     "updated_at BIGINT NOT NULL" +
                     ")";
         } else {
@@ -130,8 +156,8 @@ public class Database {
                 knownColumns.add(column);
             } catch (SQLException e) {
                 String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
-                // Column might already exist (race with another save) - ignore that case.
-                if (!msg.contains("duplicate") && !msg.contains("exist")) {
+                // Column might already exist (created outside our cache) - ignore only that case.
+                if (!msg.contains("duplicate column")) {
                     throw e;
                 }
                 knownColumns.add(column);
@@ -142,7 +168,9 @@ public class Database {
     /**
      * Writes (upserts) a single row for the player with one column per stat.
      */
-    public void saveStats(java.util.UUID uuid, String playerName, Map<String, Long> stats) throws SQLException {
+    public synchronized void saveStats(java.util.UUID uuid, String playerName, Map<String, Long> stats) throws SQLException {
+        ensureConnection();
+
         // Build column-name -> value map first, so we only touch the DB once per save.
         Map<String, Long> columns = new java.util.LinkedHashMap<>();
         for (Map.Entry<String, Long> entry : stats.entrySet()) {
@@ -184,13 +212,14 @@ public class Database {
         }
     }
 
-    public void close() {
+    public synchronized void close() {
         if (connection != null) {
             try {
                 connection.close();
             } catch (SQLException e) {
                 plugin.getLogger().warning("Error closing database connection: " + e.getMessage());
             }
+            connection = null;
         }
     }
 }

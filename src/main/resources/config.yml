@@ -3,11 +3,11 @@
 # =========================================================
 
 database:
-  # SQLITE або MYSQL
+  # SQLITE or MYSQL
   type: SQLITE
 
   sqlite:
-    # Файл лежить у папці плагіна: plugins/DefaultStats/<file>
+    # File is located in the plugin folder: plugins/DefaultStats/<file>
     file: stats.db
 
   mysql:
@@ -18,20 +18,23 @@ database:
     password: ""
     useSSL: false
 
-  # Префікс для назв таблиць (корисно, якщо БД спільна з іншими плагінами)
+  # Table name prefix (useful if the database is shared with other plugins)
   table-prefix: "defstats_"
 
 sync:
-  # Як часто (у секундах) записувати статистику всіх ОНЛАЙН гравців у БД
+  # How often (in seconds) to save statistics for all ONLINE players to the DB
   interval-seconds: 300
 
-  # Чи записувати статистику гравця одразу при виході з сервера
+  # Whether to save player statistics immediately upon leaving the server
   save-on-quit: true
 
-# Список блоків/предметів, для яких збирається окрема статистика видобутку.
-# Повний перелік усіх матеріалів гри був би занадто важким для сервера,
-# тому тут вказуються тільки потрібні тобі.
-# Назви - як в enum org.bukkit.Material (великими літерами).
+# List of blocks/items for which individual mining/harvesting stats are collected.
+# Tracking all game materials would be too heavy for the server,
+# so only list the ones you need here.
+# Names must match org.bukkit.Material enum (UPPERCASE).
+# Each material adds up to ~7 columns (mined, crafted, used, broken, picked up,
+# dropped). MySQL/InnoDB allows at most 1017 columns per table, so keep this
+# list reasonably short (roughly under 100 entries).
 track-materials:
   - STONE
   - COAL_ORE
@@ -48,8 +51,8 @@ track-materials:
   - ACACIA_LOG
   - DARK_OAK_LOG
 
-# Список типів мобів, для яких рахується окрема кількість вбивств.
-# Назви - як в enum org.bukkit.entity.EntityType.
+# List of entity types for which individual kill counts are tracked.
+# Names must match org.bukkit.entity.EntityType enum (UPPERCASE).
 track-entities:
   - ZOMBIE
   - SKELETON

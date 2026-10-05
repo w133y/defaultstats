@@ -1,9 +1,9 @@
 name: DefaultStats
-version: '1.0.0'
+version: '1.1.0'
 main: com.w1z4r_d.defaultstats.DefaultStats
 api-version: '1.21'
 folia-supported: true
-author: YourServer
+author: w1z4r_d
 description: Collects default Minecraft player statistics into a database on a configurable interval.
 
 commands:
